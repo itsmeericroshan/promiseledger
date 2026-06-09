@@ -1,0 +1,28 @@
+{
+  "name": "promiseledger",
+  "version": "1.0.0",
+  "description": "AI-powered political accountability tracker — ET GenAI Hackathon 2.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint"
+  },
+  "dependencies": {
+    "next": "14.2.3",
+    "react": "^18",
+    "react-dom": "^18"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "keywords": [
+    "political-accountability",
+    "genai",
+    "anthropic",
+    "claude",
+    "nextjs",
+    "hackathon"
+  ]
+}
