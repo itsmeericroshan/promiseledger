@@ -6,8 +6,7 @@
 ---
 
 ## 🔴 Live Demo
-👉 **[https://promiseledger.vercel.app](https://promiseledger.vercel.app)**
-> *(Replace with your actual Vercel URL after deploying)*
+👉 **[https://promiseledger.vercel.app](https://promiseledger-app-eric-roshan-t-s-projects.vercel.app/)**
 
 ## 🎥 Demo Video
 👉 **[Watch on YouTube / Loom](#)**
