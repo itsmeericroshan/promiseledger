@@ -485,7 +485,7 @@ Rules: kept=clear evidence implemented; broken=cancelled/failed/deadline passed;
                   <div className="step-body">
                     <div className="step-label">What did they promise? *</div>
                     <div className="step-hint">Write it in your own words or copy it exactly.</div>
-                    <textarea rows={3} placeholder='e.g. "We will form a dedicated women's security force in every district by 2026."' value={addText} onChange={e => setAddText(e.target.value)} />
+                    <textarea rows={3} placeholder="e.g. We will form a dedicated women's security force in every district by 2026." value={addText} onChange={e => setAddText(e.target.value)} />
                     {fingerprint && (
                       <div className="fp-box">
                         <div className="fp-label">🔏 Unique Fingerprint (auto-generated)</div>
