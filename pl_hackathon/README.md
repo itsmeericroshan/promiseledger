@@ -6,7 +6,7 @@
 ---
 
 ## 🔴 Live Demo
-👉 **[https://promiseledger.vercel.app](https://promiseledger-app-eric-roshan-t-s-projects.vercel.app/)**
+👉 **[https://promiseledger.vercel.app](https://promiseledger-app.vercel.app/)**
 
 ## 🎥 Demo Video
 👉 **[Watch on YouTube / Loom](#)**
