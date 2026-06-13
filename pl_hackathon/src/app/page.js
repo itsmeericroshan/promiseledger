@@ -100,47 +100,44 @@ export default function Home() {
       const data = await callAI({
         model: 'claude-sonnet-4-20250514',
         max_tokens: 3000,
-        system: `You are WE — an advanced political accountability AI. You perform DEEP RESEARCH by searching the web multiple times with different queries to get the most up-to-date, accurate information.
+        system: `You are WE — a political accountability AI. Search the web thoroughly using multiple queries to research this promise. Search at least 3 times with different terms including "2025" and "2026" in queries.
 
-IMPORTANT: Always search with recent year terms: "2025", "2026", "latest", "update" to get the freshest results. Search at least 3-4 times with different queries. Be specific with facts, numbers, dates, percentages.
+You MUST respond ONLY with a valid JSON object. No markdown fences, no extra text before or after. Start your response with { and end with }.
 
-After thorough research, respond ONLY with this exact JSON (no markdown, no extra text):
+Required JSON structure:
 {
-  "promise_text": "<exact or reconstructed wording>",
-  "made_by": "<full name and party/position>",
-  "made_when": "<specific date or year>",
-  "made_where": "<event, place, speech>",
-  "verdict": "fulfilled" | "broken" | "pending" | "partial" | "unknown",
-  "confidence": "high" | "medium" | "low",
-  "fulfillment_pct": <0-100>,
-  "sustainability_score": <0-100>,
-  "people_impact_score": <0-100>,
-  "current_status": "<3-4 specific sentences with facts, numbers, dates from latest news>",
-  "timeline": [
-    {"year": "<year>", "event": "<what happened this year>"}
-  ],
-  "key_findings": ["<specific finding with data>", "<finding 2>", "<finding 3>", "<finding 4>"],
-  "advantages": ["<concrete advantage with impact>", "<advantage 2>", "<advantage 3>"],
-  "disadvantages": ["<concrete risk or downside>", "<disadvantage 2>", "<disadvantage 3>"],
-  "people_impact": "<2 sentences on how this affects ordinary citizens daily lives>",
-  "sustainability": "<2 sentences on long-term viability, environmental/economic sustainability>",
-  "expert_verdict": "<what experts, fact-checkers, or opposition say about this>",
-  "sources": [
-    {"title": "<headline>", "snippet": "<one specific sentence with facts>", "url": "<url>", "date": "<date>", "credibility": "high" | "medium"}
-  ],
+  "promise_text": "the promise as stated or found",
+  "made_by": "name and party if found, else Unknown",
+  "made_when": "year or date if found, else Unknown",
+  "made_where": "event or place if found, else Unknown",
+  "verdict": "fulfilled OR broken OR pending OR partial OR unknown",
+  "confidence": "high OR medium OR low",
+  "fulfillment_pct": 50,
+  "sustainability_score": 50,
+  "people_impact_score": 50,
+  "current_status": "Write 3-4 sentences here with specific facts, numbers and dates about the current status of this promise based on your research.",
+  "timeline": [{"year": "2019", "event": "Promise was made during elections"}, {"year": "2023", "event": "Partial implementation reported"}],
+  "key_findings": ["Finding 1 with specific data", "Finding 2", "Finding 3", "Finding 4"],
+  "advantages": ["Advantage 1 if fulfilled", "Advantage 2", "Advantage 3"],
+  "disadvantages": ["Risk or concern 1", "Risk 2", "Risk 3"],
+  "people_impact": "2 sentences on how this affects ordinary citizens in daily life.",
+  "sustainability": "2 sentences on long-term viability and sustainability.",
+  "expert_verdict": "What fact-checkers, economists, or analysts say about this promise.",
+  "sources": [{"title": "Article title", "snippet": "One sentence summary", "url": "https://...", "date": "Month Year", "credibility": "high OR medium"}],
   "searched_on": "June 2026"
 }
 
-Never say pending if there is clear evidence of completion or failure. Be brutally honest.`,
+IMPORTANT: current_status must never be empty. Always write something meaningful based on your research. If the promise is not found, say so clearly in current_status.`,
         tools: [{ type: 'web_search_20250305', name: 'web_search' }],
-        messages: [{ role: 'user', content: `Do deep research on this political promise and give me the absolute latest status as of June 2026: "${askInput.trim()}"
+        messages: [{ role: 'user', content: `Research this political promise thoroughly and give me the latest status as of June 2026: "${askInput.trim()}"
 
-Search for:
-1. Whether this promise was made at all and by whom
-2. Latest 2025-2026 news about its implementation
-3. Government reports, RTI data, or fact-checks about it
-4. Expert opinions and criticism
-5. Impact on common people` }]
+Search multiple times:
+1. Search for the promise itself and who made it
+2. Search for "promise status 2025 2026"
+3. Search for news about its implementation or failure
+4. Search for expert opinions and fact-checks
+
+Then return the complete JSON.` }]
       })
 
       const textBlock = [...(data.content || [])].reverse().find(b => b.type === 'text')
@@ -689,7 +686,7 @@ Respond ONLY with JSON:
               <div className="ask-divider"/>
               <div style={{fontSize:11,color:'var(--text3)',marginBottom:10,fontWeight:600}}>Try these:</div>
               <div className="ask-examples">
-                {['2 crore jobs per year','Bullet train by 2023','Free electricity farmers','Smart cities mission','Women safety force','Doubling farmer income 2022'].map(ex => (
+                {['Free education promise by a party','Women safety force scheme','2 crore jobs per year promise','Smart cities mission update','Free electricity to farmers','Bullet train project status'].map(ex => (
                   <span key={ex} className="ask-ex" onClick={() => setAskInput(ex)}>{ex}</span>
                 ))}
               </div>
@@ -752,7 +749,7 @@ Respond ONLY with JSON:
                     {/* Current Status */}
                     <div className="rs">
                       <div className="rs-title">📰 What Actually Happened</div>
-                      <div className="status-text">{r.current_status}</div>
+                      <div className="status-text">{r.current_status || 'WE searched the web but could not find specific information about this promise. Try rephrasing your query with more details.'}</div>
                     </div>
 
                     {/* Timeline */}
