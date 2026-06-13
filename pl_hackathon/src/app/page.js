@@ -1046,34 +1046,34 @@ Respond ONLY with JSON:
       {toast&&<div className="toast-wrap"><div className={`toast ${toast.type||'default'}`}>{toast.msg}</div></div>}
     </>
   )
+}
 
-  function ScoreRing({ val, label, color }) {
-    const r=28, circ=2*Math.PI*r, dash=(val/100)*circ
-    return (
-      <div style={{textAlign:'center',flex:1}}>
-        <svg width="72" height="72" viewBox="0 0 72 72">
-          <circle cx="36" cy="36" r={r} fill="none" stroke="#1a1a1a" strokeWidth="7"/>
-          <circle cx="36" cy="36" r={r} fill="none" stroke={color} strokeWidth="7"
-            strokeDasharray={`${dash} ${circ}`} strokeLinecap="round"
-            transform="rotate(-90 36 36)"/>
-          <text x="36" y="41" textAnchor="middle" fill={color} fontSize="13" fontWeight="700" fontFamily="Nunito,sans-serif">{val}%</text>
-        </svg>
-        <div style={{fontSize:10,color:'#888',marginTop:2,fontWeight:600}}>{label}</div>
-      </div>
-    )
-  }
+function ScoreRing({ val, label, color }) {
+  const r=28, circ=2*Math.PI*r, dash=(val/100)*circ
+  return (
+    <div style={{textAlign:'center',flex:1}}>
+      <svg width="72" height="72" viewBox="0 0 72 72">
+        <circle cx="36" cy="36" r={r} fill="none" stroke="#1a1a1a" strokeWidth="7"/>
+        <circle cx="36" cy="36" r={r} fill="none" stroke={color} strokeWidth="7"
+          strokeDasharray={`${dash} ${circ}`} strokeLinecap="round"
+          transform="rotate(-90 36 36)"/>
+        <text x="36" y="41" textAnchor="middle" fill={color} fontSize="13" fontWeight="700" fontFamily="Nunito,sans-serif">{val}%</text>
+      </svg>
+      <div style={{fontSize:10,color:'#888',marginTop:2,fontWeight:600}}>{label}</div>
+    </div>
+  )
+}
 
-  function VerdictBar({ val }) {
-    const color=val>=70?'#4ade80':val>=40?'#fbbf24':'#f87171'
-    return (
-      <div>
-        <div style={{display:'flex',justifyContent:'space-between',fontSize:12,color:'#888',marginBottom:5}}>
-          <span>Fulfillment Likelihood</span><span style={{fontWeight:700,color,fontSize:13}}>{val}%</span>
-        </div>
-        <div style={{height:10,background:'#1a1a1a',borderRadius:100,overflow:'hidden'}}>
-          <div style={{height:'100%',width:`${val}%`,background:`linear-gradient(90deg,${color}88,${color})`,borderRadius:100,boxShadow:`0 0 8px ${color}66`}}/>
-        </div>
+function VerdictBar({ val }) {
+  const color=val>=70?'#4ade80':val>=40?'#fbbf24':'#f87171'
+  return (
+    <div>
+      <div style={{display:'flex',justifyContent:'space-between',fontSize:12,color:'#888',marginBottom:5}}>
+        <span>Fulfillment Likelihood</span><span style={{fontWeight:700,color,fontSize:13}}>{val}%</span>
       </div>
-    )
-  }
+      <div style={{height:10,background:'#1a1a1a',borderRadius:100,overflow:'hidden'}}>
+        <div style={{height:'100%',width:`${val}%`,background:`linear-gradient(90deg,${color}88,${color})`,borderRadius:100,boxShadow:`0 0 8px ${color}66`}}/>
+      </div>
+    </div>
+  )
 }
