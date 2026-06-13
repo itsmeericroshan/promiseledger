@@ -100,56 +100,79 @@ export default function Home() {
       const data = await callAI({
         model: 'claude-sonnet-4-20250514',
         max_tokens: 3000,
-        system: `You are WE — a political accountability AI. Search the web thoroughly using multiple queries to research this promise. Search at least 3 times with different terms including "2025" and "2026" in queries.
+        system: `You are WE — a political accountability AI. Use web_search to research the promise thoroughly. Search multiple times with different queries including recent years (2024, 2025, 2026).
 
-You MUST respond ONLY with a valid JSON object. No markdown fences, no extra text before or after. Start your response with { and end with }.
+After searching, you MUST respond with ONLY a JSON object. No markdown. No explanation. Just the raw JSON starting with { and ending with }.
 
-Required JSON structure:
+JSON format:
 {
-  "promise_text": "the promise as stated or found",
-  "made_by": "name and party if found, else Unknown",
-  "made_when": "year or date if found, else Unknown",
-  "made_where": "event or place if found, else Unknown",
-  "verdict": "fulfilled OR broken OR pending OR partial OR unknown",
-  "confidence": "high OR medium OR low",
-  "fulfillment_pct": 50,
-  "sustainability_score": 50,
-  "people_impact_score": 50,
-  "current_status": "Write 3-4 sentences here with specific facts, numbers and dates about the current status of this promise based on your research.",
-  "timeline": [{"year": "2019", "event": "Promise was made during elections"}, {"year": "2023", "event": "Partial implementation reported"}],
-  "key_findings": ["Finding 1 with specific data", "Finding 2", "Finding 3", "Finding 4"],
-  "advantages": ["Advantage 1 if fulfilled", "Advantage 2", "Advantage 3"],
-  "disadvantages": ["Risk or concern 1", "Risk 2", "Risk 3"],
-  "people_impact": "2 sentences on how this affects ordinary citizens in daily life.",
-  "sustainability": "2 sentences on long-term viability and sustainability.",
-  "expert_verdict": "What fact-checkers, economists, or analysts say about this promise.",
-  "sources": [{"title": "Article title", "snippet": "One sentence summary", "url": "https://...", "date": "Month Year", "credibility": "high OR medium"}],
+  "promise_text": "state the promise here",
+  "made_by": "who made it",
+  "made_when": "when",
+  "made_where": "where",
+  "verdict": "fulfilled",
+  "confidence": "high",
+  "fulfillment_pct": 65,
+  "sustainability_score": 60,
+  "people_impact_score": 70,
+  "current_status": "Write detailed status here based on your research. Be specific with facts, numbers, years.",
+  "timeline": [{"year": "2019", "event": "Promise was made"}, {"year": "2024", "event": "Latest update"}],
+  "key_findings": ["Finding 1", "Finding 2", "Finding 3"],
+  "advantages": ["Advantage 1", "Advantage 2", "Advantage 3"],
+  "disadvantages": ["Risk 1", "Risk 2", "Risk 3"],
+  "people_impact": "How this affects ordinary people.",
+  "sustainability": "Long term viability assessment.",
+  "expert_verdict": "What analysts and fact-checkers say.",
+  "sources": [{"title": "Source title", "snippet": "What it says", "url": "https://example.com", "date": "2025", "credibility": "high"}],
   "searched_on": "June 2026"
 }
 
-IMPORTANT: current_status must never be empty. Always write something meaningful based on your research. If the promise is not found, say so clearly in current_status.`,
+Verdict must be one of: fulfilled, broken, pending, partial, unknown
+Confidence must be one of: high, medium, low
+All numeric scores must be numbers between 0 and 100.`,
         tools: [{ type: 'web_search_20250305', name: 'web_search' }],
-        messages: [{ role: 'user', content: `Research this political promise thoroughly and give me the latest status as of June 2026: "${askInput.trim()}"
+        messages: [{ role: 'user', content: `Search the web and research this political promise: "${askInput.trim()}"
 
-Search multiple times:
-1. Search for the promise itself and who made it
-2. Search for "promise status 2025 2026"
-3. Search for news about its implementation or failure
-4. Search for expert opinions and fact-checks
+Do at least 3 searches:
+1. Search for the promise text and who made it
+2. Search for latest 2025 or 2026 news about it  
+3. Search for fact-checks or implementation reports
 
-Then return the complete JSON.` }]
+Then give me the complete JSON response.` }]
       })
 
-      const textBlock = [...(data.content || [])].reverse().find(b => b.type === 'text')
-      const raw = textBlock?.text || '{}'
+      // Extract text from all content blocks including after tool use
+      let raw = ''
+      if (data.content && Array.isArray(data.content)) {
+        // Get all text blocks, preferring the last one (after tool use)
+        const textBlocks = data.content.filter(b => b.type === 'text')
+        raw = textBlocks.length > 0 ? textBlocks[textBlocks.length - 1].text : ''
+      }
+      
       let result
-      try { result = JSON.parse(raw.replace(/```json|```/g, '').trim()) }
-      catch {
-        const match = raw.match(/\{[\s\S]*\}/)
-        result = match ? JSON.parse(match[0]) : {
-          verdict: 'unknown', confidence: 'low',
-          current_status: 'Could not find enough information. Please try a more specific query.',
-          sources: [], key_findings: [], advantages: [], disadvantages: [], timeline: []
+      try {
+        // Try to find JSON in the response
+        const cleaned = raw.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim()
+        const jsonMatch = cleaned.match(/\{[\s\S]*\}/)
+        if (jsonMatch) {
+          result = JSON.parse(jsonMatch[0])
+        } else {
+          throw new Error('No JSON found')
+        }
+      } catch {
+        result = {
+          verdict: 'unknown',
+          confidence: 'low',
+          fulfillment_pct: 0,
+          sustainability_score: 0,
+          people_impact_score: 0,
+          current_status: raw.length > 50 ? raw.slice(0, 500) : 'WE could not find specific information about this promise. Please try a more specific query with the politician\'s name and year.',
+          timeline: [],
+          key_findings: [],
+          advantages: [],
+          disadvantages: [],
+          sources: [],
+          searched_on: 'June 2026'
         }
       }
       setAskResult(result)
@@ -223,11 +246,14 @@ Respond ONLY with JSON:
         tools: [{ type: 'web_search_20250305', name: 'web_search' }],
         messages: [{ role: 'user', content: `Latest status of this promise (search 2025-2026): "${modal.text}" by ${modal.who || 'unknown'}` }]
       })
-      const textBlock = [...(data.content||[])].reverse().find(b => b.type==='text')
-      const raw = textBlock?.text || '{}'
+      const textBlocks2 = (data.content||[]).filter(b => b.type==='text')
+      const raw2 = textBlocks2.length>0 ? textBlocks2[textBlocks2.length-1].text : '{}'
       let result
-      try { result = JSON.parse(raw.replace(/```json|```/g,'').trim()) }
-      catch { const m = raw.match(/\{[\s\S]*\}/); result = m ? JSON.parse(m[0]) : { verdict:'unknown', current_status:'Could not analyse.', sources:[] } }
+      try {
+        const jm = raw2.replace(/```json\s*/g,'').replace(/```\s*/g,'').trim().match(/\{[\s\S]*\}/)
+        result = jm ? JSON.parse(jm[0]) : null
+        if(!result) throw new Error('no json')
+      } catch { result = { verdict:'unknown', confidence:'low', current_status:'Could not analyse. Please try again.', sources:[], key_findings:[], fulfillment_pct:0 } }
       setModalAI(result)
       if (['fulfilled','broken','pending'].includes(result.verdict) && result.confidence==='high') {
         const ns = result.verdict==='fulfilled'?'kept':result.verdict==='broken'?'broken':'pending'
