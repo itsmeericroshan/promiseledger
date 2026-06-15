@@ -116,20 +116,30 @@ After all searches, write a comprehensive analysis in plain text covering:
 
       setAskStage('📊 Analysing findings and generating insights...')
 
-      // Extract ALL text from step1 response (including after tool use)
+      // Extract ALL content from step1 including web search results
       let searchSummary = ''
       if (step1.content && Array.isArray(step1.content)) {
         for (const block of step1.content) {
-          if (block.type === 'text') {
+          if (block.type === 'text' && block.text) {
             searchSummary += block.text + '\n'
           }
-          // Also capture web search results if available
-          if (block.type === 'tool_result' || block.type === 'web_search_tool_result') {
-            if (block.content) {
-              searchSummary += JSON.stringify(block.content) + '\n'
+          if (block.type === 'web_search_tool_result' && Array.isArray(block.content)) {
+            for (const item of block.content) {
+              if (item.type === 'document' && item.document) {
+                searchSummary += '\nTitle: ' + (item.document.title||'') + '\n' + (item.document.content||'') + '\n'
+              }
             }
           }
+          if (block.type === 'tool_use' && block.input) {
+            searchSummary += '[Searched: ' + JSON.stringify(block.input) + ']\n'
+          }
+          if (block.type === 'tool_result' && block.content) {
+            searchSummary += JSON.stringify(block.content) + '\n'
+          }
         }
+      }
+      if (!searchSummary.trim()) {
+        searchSummary = 'Research topic: "' + askInput.trim() + '". Use your knowledge to give a thorough analysis.'
       }
 
       // STEP 2: Feed research to Claude and ask for structured JSON
