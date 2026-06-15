@@ -245,15 +245,6 @@ All scores must be numbers 0-100.`
     }
     setAsking(false)
   }
-      setAskResult(result)
-      setAskStage('')
-    } catch (err) {
-      showToast('Analysis failed. Please try again.', 'error')
-      setAskStage('')
-      console.error(err)
-    }
-    setAsking(false)
-  }
 
   // ── SAVE PROMISE (manual add only) ───────────────────────────────
   async function savePromise() {
