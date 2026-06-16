@@ -84,172 +84,34 @@ export default function Home() {
     pending: ledger.filter(p => p.status === 'pending').length,
   }
 
-  // ── AGENTIC ASK WE ───────────────────────────────────────────────
+  // ── ASK WE (Tavily search + Claude analysis) ────────────────
   async function askWE() {
     if (!askInput.trim()) { showToast('Please type a promise or question.', 'error'); return }
     setAsking(true)
     setAskResult(null)
+    setAskStage('🔍 Searching the web for latest news...')
 
     try {
-      setAskStage('🔍 Searching latest news and government records...')
-
-      // STEP 1: Call with web search tool - get search results
-      const step1 = await callAI({
-        model: 'claude-sonnet-4-20250514',
-        max_tokens: 4000,
-        system: `You are WE — a political accountability AI. Use web_search to research this political promise thoroughly. 
-Search at least 3 times:
-1. Search for who made the promise and when
-2. Search for "promise 2025 2026 status update"  
-3. Search for news about fulfillment or failure
-
-After all searches, write a comprehensive analysis in plain text covering:
-- What the promise was and who made it
-- Current status as of 2025/2026
-- Whether it was fulfilled, broken, or pending
-- Key facts and numbers
-- Impact on people
-- Expert opinions`,
-        tools: [{ type: 'web_search_20250305', name: 'web_search' }],
-        messages: [{ role: 'user', content: `Research this political promise: "${askInput.trim()}"` }]
+      const res = await fetch('/api/search', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ query: askInput.trim() })
       })
 
-      setAskStage('📊 Analysing findings and generating insights...')
+      setAskStage('📊 Analysing results...')
+      const result = await res.json()
 
-      // Extract ALL content from step1 including web search results
-      let searchSummary = ''
-      if (step1.content && Array.isArray(step1.content)) {
-        for (const block of step1.content) {
-          if (block.type === 'text' && block.text) {
-            searchSummary += block.text + '\n'
-          }
-          if (block.type === 'web_search_tool_result' && Array.isArray(block.content)) {
-            for (const item of block.content) {
-              if (item.type === 'document' && item.document) {
-                searchSummary += '\nTitle: ' + (item.document.title||'') + '\n' + (item.document.content||'') + '\n'
-              }
-            }
-          }
-          if (block.type === 'tool_use' && block.input) {
-            searchSummary += '[Searched: ' + JSON.stringify(block.input) + ']\n'
-          }
-          if (block.type === 'tool_result' && block.content) {
-            searchSummary += JSON.stringify(block.content) + '\n'
-          }
-        }
-      }
-      if (!searchSummary.trim()) {
-        searchSummary = 'Research topic: "' + askInput.trim() + '". Use your knowledge to give a thorough analysis.'
-      }
-
-      // STEP 2: Feed research to Claude and ask for structured JSON
-      const step2 = await callAI({
-        model: 'claude-sonnet-4-20250514',
-        max_tokens: 2000,
-        messages: [{
-          role: 'user',
-          content: `Based on this research about the political promise "${askInput.trim()}":
-
-${searchSummary || 'Research was conducted via web search.'}
-
-Now create a detailed analysis in this EXACT JSON format (respond with ONLY the JSON, nothing else):
-
-{
-  "promise_text": "exact or paraphrased promise",
-  "made_by": "politician name and party",
-  "made_when": "date or year",
-  "made_where": "event or location",
-  "verdict": "fulfilled",
-  "confidence": "high",
-  "fulfillment_pct": 70,
-  "sustainability_score": 65,
-  "people_impact_score": 75,
-  "current_status": "3-4 detailed sentences about current status with specific facts and numbers",
-  "timeline": [
-    {"year": "2019", "event": "Promise announced"},
-    {"year": "2022", "event": "Implementation began"},
-    {"year": "2025", "event": "Current status"}
-  ],
-  "key_findings": [
-    "Specific finding with data",
-    "Second finding",
-    "Third finding",
-    "Fourth finding"
-  ],
-  "advantages": [
-    "Concrete benefit if fulfilled",
-    "Second advantage",
-    "Third advantage"
-  ],
-  "disadvantages": [
-    "Risk or concern",
-    "Second risk",
-    "Third risk"
-  ],
-  "people_impact": "How this directly affects ordinary citizens in daily life with specific examples.",
-  "sustainability": "Assessment of long-term viability, cost, and environmental/economic sustainability.",
-  "expert_verdict": "What economists, analysts, opposition, or fact-checkers say about this promise.",
-  "sources": [
-    {
-      "title": "News article title",
-      "snippet": "One sentence about what this source says",
-      "url": "https://...",
-      "date": "Month Year",
-      "credibility": "high"
-    }
-  ],
-  "searched_on": "June 2026"
-}
-
-Verdict options: fulfilled, broken, pending, partial, unknown
-Confidence options: high, medium, low
-All scores must be numbers 0-100.`
-        }]
-      })
-
-      setAskStage('')
-
-      // Extract JSON from step2
-      let raw = ''
-      if (step2.content && Array.isArray(step2.content)) {
-        const textBlocks = step2.content.filter(b => b.type === 'text')
-        raw = textBlocks.map(b => b.text).join('\n')
-      }
-
-      let result
-      try {
-        const cleaned = raw.replace(/```json\s*/gi, '').replace(/```\s*/g, '').trim()
-        const jsonMatch = cleaned.match(/\{[\s\S]*\}/)
-        result = jsonMatch ? JSON.parse(jsonMatch[0]) : null
-        if (!result || !result.verdict) throw new Error('Invalid JSON')
-      } catch {
-        // If JSON parsing fails, create a result from the raw text
-        result = {
-          verdict: 'pending',
-          confidence: 'low',
-          fulfillment_pct: 50,
-          sustainability_score: 50,
-          people_impact_score: 50,
-          promise_text: askInput.trim(),
-          made_by: 'Not specified',
-          made_when: 'Unknown',
-          made_where: 'Unknown',
-          current_status: raw.length > 100 ? raw.slice(0, 600) + '...' : 'Please try again with a more specific query including the politician name and year.',
-          timeline: [],
-          key_findings: [],
-          advantages: [],
-          disadvantages: [],
-          people_impact: '',
-          sustainability: '',
-          expert_verdict: '',
-          sources: [],
-          searched_on: 'June 2026'
-        }
+      if (result.error) {
+        showToast(result.error, 'error')
+        setAskStage('')
+        setAsking(false)
+        return
       }
 
       setAskResult(result)
+      setAskStage('')
     } catch (err) {
-      showToast('Analysis failed. Please try again.', 'error')
+      showToast('Search failed. Please try again.', 'error')
       setAskStage('')
       console.error(err)
     }
@@ -307,38 +169,28 @@ All scores must be numbers 0-100.`
     if (!modal) return
     setModalAI('loading')
     try {
-      const data = await callAI({
-        model: 'claude-sonnet-4-20250514',
-        max_tokens: 2000,
-        system: `You are WE. Search the web multiple times for the LATEST 2025-2026 news about this promise. Be specific with facts.
-
-Respond ONLY with JSON:
-{"verdict":"fulfilled"|"broken"|"pending"|"partial","confidence":"high"|"medium"|"low","fulfillment_pct":<0-100>,"current_status":"<3 sentences with facts>","key_findings":["<finding>","<finding>","<finding>"],"advantages":["<adv>","<adv>"],"disadvantages":["<dis>","<dis>"],"sources":[{"title":"<t>","snippet":"<s>","url":"<u>","date":"<d>"}],"searched_on":"June 2026"}`,
-        tools: [{ type: 'web_search_20250305', name: 'web_search' }],
-        messages: [{ role: 'user', content: `Latest status of this promise (search 2025-2026): "${modal.text}" by ${modal.who || 'unknown'}` }]
+      const res = await fetch('/api/search', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ query: modal.text + (modal.who ? ' by ' + modal.who : '') })
       })
-      const textBlocks2 = (data.content||[]).filter(b => b.type==='text')
-      const raw2 = textBlocks2.length>0 ? textBlocks2[textBlocks2.length-1].text : '{}'
-      let result
-      try {
-        const jm = raw2.replace(/```json\s*/g,'').replace(/```\s*/g,'').trim().match(/\{[\s\S]*\}/)
-        result = jm ? JSON.parse(jm[0]) : null
-        if(!result) throw new Error('no json')
-      } catch { result = { verdict:'unknown', confidence:'low', current_status:'Could not analyse. Please try again.', sources:[], key_findings:[], fulfillment_pct:0 } }
+      const result = await res.json()
+      if (result.error) { setModalAI({ error: result.error }); return }
       setModalAI(result)
-      if (['fulfilled','broken','pending'].includes(result.verdict) && result.confidence==='high') {
-        const ns = result.verdict==='fulfilled'?'kept':result.verdict==='broken'?'broken':'pending'
+      if (['fulfilled','broken','pending'].includes(result.verdict) && result.confidence === 'high') {
+        const ns = result.verdict === 'fulfilled' ? 'kept' : result.verdict === 'broken' ? 'broken' : 'pending'
         const updated = ledger.map(p => {
-          if (p.id!==modal.id) return p
-          const h = [...(p.verdictHistory||[]),{status:ns,note:`[AI] ${result.current_status}`,proof:result.sources?.[0]?.url||'',at:Date.now(),byAI:true}]
+          if (p.id !== modal.id) return p
+          const h = [...(p.verdictHistory||[]), {status:ns, note:`[AI] ${result.current_status}`, proof:result.sources?.[0]?.url||'', at:Date.now(), byAI:true}]
           return {...p, status:ns, verdictHistory:h}
         })
         persist(updated)
-        setModal(updated.find(p=>p.id===modal.id))
+        setModal(updated.find(p => p.id === modal.id))
         setSelectedVerdict(ns)
       }
-    } catch(err) { setModalAI({error:err.message}) }
+    } catch(err) { setModalAI({ error: err.message }) }
   }
+
 
   // helpers
   const vIcon = v => v==='fulfilled'||v==='kept'?'✅':v==='broken'?'❌':v==='partial'?'🔄':v==='unknown'?'❓':'⏳'
