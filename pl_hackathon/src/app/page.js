@@ -627,7 +627,7 @@ export default function Home() {
 
             <div className="ask-wrap">
               <textarea className="ask-textarea" rows={4}
-                placeholder="e.g. Did Modi promise 2 crore jobs per year?  Or: Women security force promise  Or: Smart cities mission status  Or: Free electricity to farmers"
+                placeholder="e.g. XYZ party's promise to build new highways  Or: ABC government's free electricity scheme  Or: A leader's pledge to create jobs"
                 value={askInput}
                 onChange={e => setAskInput(e.target.value)}
                 onKeyDown={e => { if (e.key==='Enter' && !e.shiftKey) { e.preventDefault(); askWE() } }}
