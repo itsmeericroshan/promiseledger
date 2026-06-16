@@ -206,13 +206,13 @@ export default function Home() {
     return (
       <div style={{textAlign:'center',flex:1}}>
         <svg width="72" height="72" viewBox="0 0 72 72">
-          <circle cx="36" cy="36" r={r} fill="none" stroke="#2a2a2a" strokeWidth="7"/>
+          <circle cx="36" cy="36" r={r} fill="none" stroke="#e8e0d4" strokeWidth="7"/>
           <circle cx="36" cy="36" r={r} fill="none" stroke={color} strokeWidth="7"
             strokeDasharray={`${dash} ${circ}`} strokeLinecap="round"
             transform="rotate(-90 36 36)" style={{transition:'stroke-dasharray 1s ease'}}/>
           <text x="36" y="41" textAnchor="middle" fill={color} fontSize="14" fontWeight="700" fontFamily="Nunito,sans-serif">{val}%</text>
         </svg>
-        <div style={{fontSize:11,color:'#888',marginTop:2,fontWeight:600}}>{label}</div>
+        <div style={{fontSize:11,color:'#8a7060',marginTop:2,fontWeight:600}}>{label}</div>
       </div>
     )
   }
@@ -221,10 +221,10 @@ export default function Home() {
     const color = val>=70?'#4ade80':val>=40?'#fbbf24':'#f87171'
     return (
       <div>
-        <div style={{display:'flex',justifyContent:'space-between',fontSize:12,color:'#888',marginBottom:6}}>
+        <div style={{display:'flex',justifyContent:'space-between',fontSize:12,color:'#8a7060',marginBottom:6}}>
           <span>Fulfillment Likelihood</span><span style={{fontWeight:700,color,fontSize:13}}>{val}%</span>
         </div>
-        <div style={{height:10,background:'#1a1a1a',borderRadius:100,overflow:'hidden',position:'relative'}}>
+        <div style={{height:10,background:'#f2ebe0',borderRadius:100,overflow:'hidden',position:'relative'}}>
           <div style={{height:'100%',width:`${val}%`,background:`linear-gradient(90deg, ${color}88, ${color})`,borderRadius:100,transition:'width 1.2s ease',boxShadow:`0 0 8px ${color}66`}}/>
         </div>
       </div>
@@ -235,25 +235,25 @@ export default function Home() {
     <>
       <style>{`
         :root {
-          --bg: #0a0a0a;
-          --surface: #111111;
-          --surface2: #181818;
-          --border: #232323;
-          --border2: #2a2a2a;
-          --red: #e63329;
-          --red2: #ff4444;
-          --red-soft: rgba(230,51,41,0.12);
-          --green: #4ade80;
-          --green-soft: rgba(74,222,128,0.1);
-          --yellow: #fbbf24;
-          --yellow-soft: rgba(251,191,36,0.1);
-          --blue: #60a5fa;
-          --blue-soft: rgba(96,165,250,0.1);
-          --text: #f0f0f0;
-          --text2: #aaaaaa;
-          --text3: #666666;
-          --shadow: 0 4px 24px rgba(0,0,0,0.4);
-          --shadow-lg: 0 8px 48px rgba(0,0,0,0.6);
+          --bg: #faf7f2;
+          --surface: #ffffff;
+          --surface2: #f2ebe0;
+          --border: #e8e0d4;
+          --border2: #d8cdb8;
+          --red: #c0392b;
+          --red2: #e63329;
+          --red-soft: rgba(192,57,43,0.08);
+          --green: #1a7a4a;
+          --green-soft: rgba(26,122,74,0.1);
+          --yellow: #b8860b;
+          --yellow-soft: rgba(184,134,11,0.1);
+          --blue: #2563eb;
+          --blue-soft: rgba(37,99,235,0.08);
+          --text: #2d1f14;
+          --text2: #5c3d2e;
+          --text3: #8a7060;
+          --shadow: 0 2px 16px rgba(45,31,20,0.08);
+          --shadow-lg: 0 8px 32px rgba(45,31,20,0.14);
           --radius: 14px;
           --radius-lg: 20px;
         }
@@ -267,11 +267,11 @@ export default function Home() {
         ::-webkit-scrollbar-thumb { background:var(--border2); border-radius:3px; }
 
         /* NAV */
-        nav { background:rgba(10,10,10,0.95); border-bottom:1px solid var(--border); padding:0 24px; position:sticky; top:0; z-index:200; backdrop-filter:blur(12px); }
+        nav { background:rgba(250,247,242,0.95); border-bottom:1px solid var(--border); padding:0 24px; position:sticky; top:0; z-index:200; backdrop-filter:blur(12px); }
         .nav-inner { max-width:960px; margin:0 auto; display:flex; align-items:center; justify-content:space-between; height:62px; }
         .logo { display:flex; align-items:center; gap:12px; cursor:pointer; }
         .logo-mark { width:38px; height:38px; background:var(--red); border-radius:10px; display:flex; align-items:center; justify-content:center; font-family:'Fraunces',serif; font-size:20px; font-weight:700; color:#fff; box-shadow:0 0 16px rgba(230,51,41,0.4); }
-        .logo-text { font-family:'Fraunces',serif; font-size:22px; font-weight:700; color:#fff; letter-spacing:1px; }
+        .logo-text { font-family:'Fraunces',serif; font-size:22px; font-weight:700; color:var(--text); letter-spacing:1px; }
         .logo-text span { color:var(--red); }
         .logo-sub { font-size:10px; color:var(--text3); margin-top:-3px; letter-spacing:2px; text-transform:uppercase; }
         .nav-right { display:flex; align-items:center; gap:8px; }
@@ -283,7 +283,7 @@ export default function Home() {
         .hero-top { display:grid; grid-template-columns:1fr 1fr; gap:48px; align-items:center; margin-bottom:56px; }
         @media(max-width:640px) { .hero-top { grid-template-columns:1fr; gap:32px; } }
         .hero-badge { display:inline-flex; align-items:center; gap:7px; background:var(--red-soft); border:1px solid rgba(230,51,41,0.3); color:var(--red); font-size:11px; font-weight:700; padding:6px 14px; border-radius:100px; margin-bottom:20px; letter-spacing:1px; text-transform:uppercase; }
-        .hero h1 { font-family:'Fraunces',serif; font-size:clamp(36px,6vw,58px); font-weight:700; line-height:1.1; margin-bottom:16px; color:#fff; }
+        .hero h1 { font-family:'Fraunces',serif; font-size:clamp(36px,6vw,58px); font-weight:700; line-height:1.1; margin-bottom:16px; color:var(--text); }
         .hero h1 em { font-style:italic; color:var(--red); }
         .hero-desc { font-size:15px; line-height:1.8; color:var(--text2); margin-bottom:28px; }
         .hero-vm { display:flex; flex-direction:column; gap:14px; }
@@ -299,7 +299,7 @@ export default function Home() {
         .stat-num.red { color:var(--red); }
         .stat-num.green { color:var(--green); }
         .stat-num.yellow { color:var(--yellow); }
-        .stat-num.white { color:#fff; }
+        .stat-num.white { color:var(--text); }
         .stat-lbl { font-size:11px; color:var(--text3); margin-top:5px; font-weight:600; letter-spacing:0.5px; }
 
         /* BIG 4 BUTTONS */
@@ -319,7 +319,7 @@ export default function Home() {
         .big-btn.about-btn:hover { border-color:rgba(96,165,250,0.4); }
         .big-btn.active-tab { border-color:var(--red); background:var(--surface2); }
         .bb-icon { font-size:32px; margin-bottom:14px; display:block; }
-        .bb-title { font-family:'Fraunces',serif; font-size:22px; font-weight:700; color:#fff; margin-bottom:6px; }
+        .bb-title { font-family:'Fraunces',serif; font-size:22px; font-weight:700; color:var(--text); margin-bottom:6px; }
         .bb-desc { font-size:13px; color:var(--text3); line-height:1.6; }
         .bb-arrow { position:absolute; right:20px; top:50%; transform:translateY(-50%); font-size:20px; color:var(--border2); transition:all .2s; }
         .big-btn:hover .bb-arrow { color:var(--text2); transform:translateY(-50%) translateX(4px); }
@@ -330,8 +330,8 @@ export default function Home() {
         /* PAGE HEADER */
         .page-header { display:flex; align-items:center; gap:14px; margin-bottom:28px; padding-bottom:20px; border-bottom:1px solid var(--border); }
         .page-back { width:36px; height:36px; border-radius:50%; background:var(--surface); border:1px solid var(--border); display:flex; align-items:center; justify-content:center; cursor:pointer; color:var(--text2); font-size:16px; transition:all .2s; flex-shrink:0; }
-        .page-back:hover { background:var(--surface2); color:#fff; border-color:var(--border2); }
-        .page-title { font-family:'Fraunces',serif; font-size:24px; font-weight:700; color:#fff; }
+        .page-back:hover { background:var(--surface2); color:var(--text); border-color:var(--border2); }
+        .page-title { font-family:'Fraunces',serif; font-size:24px; font-weight:700; color:var(--text); }
         .page-subtitle { font-size:13px; color:var(--text3); margin-top:2px; }
 
         /* ASK PAGE */
@@ -369,7 +369,7 @@ export default function Home() {
         .rh-top { display:flex; align-items:flex-start; gap:16px; margin-bottom:14px; }
         .rh-big-icon { font-size:36px; flex-shrink:0; }
         .rh-info { flex:1; }
-        .rh-verdict { font-family:'Fraunces',serif; font-size:24px; font-weight:700; color:#fff; display:flex; align-items:center; flex-wrap:wrap; gap:8px; }
+        .rh-verdict { font-family:'Fraunces',serif; font-size:24px; font-weight:700; color:var(--text); display:flex; align-items:center; flex-wrap:wrap; gap:8px; }
         .rh-conf { font-size:11px; font-weight:700; padding:3px 10px; border-radius:100px; }
         .conf-high { background:rgba(74,222,128,0.15); color:var(--green); }
         .conf-medium { background:rgba(251,191,36,0.15); color:var(--yellow); }
@@ -442,7 +442,7 @@ export default function Home() {
         .btn-red { background:var(--red); color:#fff; box-shadow:0 4px 14px rgba(230,51,41,0.35); }
         .btn-red:hover { background:#cc2d24; transform:translateY(-1px); box-shadow:0 6px 20px rgba(230,51,41,0.45); }
         .btn-ghost { background:var(--surface2); color:var(--text2); border:1px solid var(--border); }
-        .btn-ghost:hover { background:var(--surface); color:#fff; border-color:var(--border2); }
+        .btn-ghost:hover { background:var(--surface); color:var(--text); border-color:var(--border2); }
         .btn-sm { padding:8px 16px; font-size:12px; border-radius:10px; }
         .btn:disabled { opacity:.45; cursor:not-allowed; transform:none!important; }
 
@@ -487,16 +487,16 @@ export default function Home() {
         .overlay { position:fixed; inset:0; background:rgba(0,0,0,0.75); backdrop-filter:blur(6px); z-index:300; display:flex; align-items:flex-start; justify-content:center; padding:20px; overflow-y:auto; }
         .modal { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-lg); width:100%; max-width:620px; box-shadow:0 32px 80px rgba(0,0,0,0.7); margin:auto; animation:fadeUp .3s ease; }
         .modal-head { padding:22px 24px 0; display:flex; align-items:flex-start; justify-content:space-between; gap:12px; }
-        .modal-ttl { font-family:'Fraunces',serif; font-size:18px; font-weight:700; color:#fff; line-height:1.3; }
+        .modal-ttl { font-family:'Fraunces',serif; font-size:18px; font-weight:700; color:var(--text); line-height:1.3; }
         .modal-close { width:32px; height:32px; border-radius:50%; background:var(--surface2); border:none; cursor:pointer; font-size:16px; color:var(--text3); display:flex; align-items:center; justify-content:center; flex-shrink:0; }
-        .modal-close:hover { background:var(--border); color:#fff; }
+        .modal-close:hover { background:var(--border); color:var(--text); }
         .modal-body { padding:18px 24px 24px; }
         .modal-promise { font-size:14px; line-height:1.7; color:var(--text2); background:var(--surface2); border-radius:var(--radius); padding:14px; margin-bottom:16px; font-style:italic; border-left:3px solid var(--red); }
         .drow { display:flex; gap:10px; font-size:13px; padding:6px 0; border-bottom:1px solid var(--border); }
         .drow:last-child { border-bottom:none; }
         .dk { color:var(--text3); font-weight:700; min-width:100px; flex-shrink:0; }
         .dv { color:var(--text2); word-break:break-word; }
-        .vs-h3 { font-family:'Fraunces',serif; font-size:15px; font-weight:700; color:#fff; margin:18px 0 12px; }
+        .vs-h3 { font-family:'Fraunces',serif; font-size:15px; font-weight:700; color:var(--text); margin:18px 0 12px; }
         .vc { border-radius:var(--radius); padding:14px; margin-bottom:14px; }
         .vc-kept { background:var(--green-soft); border:1px solid rgba(74,222,128,0.2); }
         .vc-broken { background:var(--red-soft); border:1px solid rgba(230,51,41,0.2); }
@@ -526,7 +526,7 @@ export default function Home() {
         .toast { padding:11px 22px; border-radius:14px; font-size:14px; font-weight:600; box-shadow:0 8px 32px rgba(0,0,0,0.5); animation:fadeUp .35s ease; max-width:380px; text-align:center; }
         .toast.success { background:var(--green); color:#000; }
         .toast.error { background:var(--red); color:#fff; }
-        .toast.default { background:var(--surface2); color:#fff; border:1px solid var(--border); }
+        .toast.default { background:var(--text); color:#fff; border:1px solid var(--border); }
 
         /* SKEL */
         .skel { height:11px; background:var(--surface2); border-radius:6px; animation:pulse 1.4s ease-in-out infinite; margin-bottom:8px; }
@@ -887,7 +887,7 @@ export default function Home() {
               ].map(([icon,title,desc]) => (
                 <div key={title} style={{background:'var(--surface)',border:'1px solid var(--border)',borderRadius:'var(--radius)',padding:'18px 20px',display:'flex',gap:16,alignItems:'flex-start'}}>
                   <div style={{fontSize:26,flexShrink:0}}>{icon}</div>
-                  <div><div style={{fontSize:15,fontWeight:700,color:'#fff',marginBottom:5}}>{title}</div><div style={{fontSize:13,color:'var(--text2)',lineHeight:1.7}}>{desc}</div></div>
+                  <div><div style={{fontSize:15,fontWeight:700,color:'var(--text)',marginBottom:5}}>{title}</div><div style={{fontSize:13,color:'var(--text2)',lineHeight:1.7}}>{desc}</div></div>
                 </div>
               ))}
             </div>
@@ -999,13 +999,13 @@ function ScoreRing({ val, label, color }) {
   return (
     <div style={{textAlign:'center',flex:1}}>
       <svg width="72" height="72" viewBox="0 0 72 72">
-        <circle cx="36" cy="36" r={r} fill="none" stroke="#1a1a1a" strokeWidth="7"/>
+        <circle cx="36" cy="36" r={r} fill="none" stroke="#e8e0d4" strokeWidth="7"/>
         <circle cx="36" cy="36" r={r} fill="none" stroke={color} strokeWidth="7"
           strokeDasharray={`${dash} ${circ}`} strokeLinecap="round"
           transform="rotate(-90 36 36)"/>
         <text x="36" y="41" textAnchor="middle" fill={color} fontSize="13" fontWeight="700" fontFamily="Nunito,sans-serif">{val}%</text>
       </svg>
-      <div style={{fontSize:10,color:'#888',marginTop:2,fontWeight:600}}>{label}</div>
+      <div style={{fontSize:10,color:'#8a7060',marginTop:2,fontWeight:600}}>{label}</div>
     </div>
   )
 }
@@ -1014,10 +1014,10 @@ function VerdictBar({ val }) {
   const color=val>=70?'#4ade80':val>=40?'#fbbf24':'#f87171'
   return (
     <div>
-      <div style={{display:'flex',justifyContent:'space-between',fontSize:12,color:'#888',marginBottom:5}}>
+      <div style={{display:'flex',justifyContent:'space-between',fontSize:12,color:'#8a7060',marginBottom:5}}>
         <span>Fulfillment Likelihood</span><span style={{fontWeight:700,color,fontSize:13}}>{val}%</span>
       </div>
-      <div style={{height:10,background:'#1a1a1a',borderRadius:100,overflow:'hidden'}}>
+      <div style={{height:10,background:'#f2ebe0',borderRadius:100,overflow:'hidden'}}>
         <div style={{height:'100%',width:`${val}%`,background:`linear-gradient(90deg,${color}88,${color})`,borderRadius:100,boxShadow:`0 0 8px ${color}66`}}/>
       </div>
     </div>
