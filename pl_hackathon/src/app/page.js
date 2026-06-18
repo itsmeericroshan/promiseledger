@@ -680,14 +680,13 @@ export default function Home() {
                       </div>
                     </div>
                     {/* Score rings */}
-                    {(r.fulfillment_pct!==undefined||r.sustainability_score!==undefined||r.people_impact_score!==undefined) && (
+                    {(r.fulfillment_likelihood_pct!==undefined||r.people_impact_score!==undefined) && (
                       <div className="scores-row">
-                        {r.fulfillment_pct!==undefined&&<ScoreRing val={r.fulfillment_pct} label="Fulfillment %" color={r.fulfillment_pct>=70?'#4ade80':r.fulfillment_pct>=40?'#fbbf24':'#f87171'}/>}
-                        {r.people_impact_score!==undefined&&<ScoreRing val={r.people_impact_score} label="People Impact" color="#60a5fa"/>}
-                        {r.sustainability_score!==undefined&&<ScoreRing val={r.sustainability_score} label="Sustainability" color="#a78bfa"/>}
-                        {r.fulfillment_pct!==undefined&&(
+                        {r.fulfillment_likelihood_pct!==undefined&&<ScoreRing val={r.fulfillment_likelihood_pct} label="Fulfillment Likelihood" color={r.fulfillment_likelihood_pct>=70?'#1a7a4a':r.fulfillment_likelihood_pct>=40?'#b8860b':'#c0392b'}/>}
+                        {r.people_impact_score!==undefined&&<ScoreRing val={r.people_impact_score} label="People Impact" color="#2563eb"/>}
+                        {r.fulfillment_likelihood_pct!==undefined&&(
                           <div style={{flex:2,alignSelf:'center',paddingLeft:8}}>
-                            <VerdictBar val={r.fulfillment_pct}/>
+                            <VerdictBar val={r.fulfillment_likelihood_pct}/>
                           </div>
                         )}
                       </div>
@@ -743,13 +742,13 @@ export default function Home() {
                       </div>
                     )}
 
-                    {/* People Impact + Sustainability */}
-                    {(r.people_impact||r.sustainability) && (
+                    {/* People Impact + Sustainability Goal */}
+                    {(r.people_impact||r.sustainability_goal) && (
                       <div className="rs">
-                        <div className="rs-title">🌍 Impact Analysis</div>
+                        <div className="rs-title">🌍 Impact & Sustainability</div>
                         <div className="impact-cards">
                           {r.people_impact&&<div className="impact-card"><div className="impact-card-label">👥 Impact on People</div><div className="impact-card-text">{r.people_impact}</div></div>}
-                          {r.sustainability&&<div className="impact-card"><div className="impact-card-label">♻️ Sustainability</div><div className="impact-card-text">{r.sustainability}</div></div>}
+                          {r.sustainability_goal&&<div className="impact-card"><div className="impact-card-label">♻️ Sustainability Goal</div><div className="impact-card-text">{r.sustainability_goal}</div></div>}
                         </div>
                       </div>
                     )}
@@ -881,7 +880,7 @@ export default function Home() {
               {[
                 ['💬','Ask WE','Type any political promise in plain language. WE understands context, partial wording, and even vague descriptions.'],
                 ['🔍','Agentic AI Search','WE uses Anthropic Claude with live web search — running multiple queries to find the latest 2025-2026 news, government reports, and fact-checks.'],
-                ['📊','Deep Insights','You get: verdict, fulfillment probability, people impact, sustainability score, timeline, advantages, risks, expert opinions, and real sources.'],
+                ['📊','Deep Insights','You get: verdict, fulfillment likelihood, people impact, sustainability goal, timeline, advantages, risks, expert opinions, and real sources.'],
                 ['✍️','Add & Track','Manually add promises with YouTube proof links. WE auto-analyses them and updates the verdict when you ask.'],
                 ['🔒','Secure & Private','Your data stays in your browser. The API key is stored server-side — never visible to anyone.'],
               ].map(([icon,title,desc]) => (
@@ -935,7 +934,7 @@ export default function Home() {
                     </div>
                     <div style={{padding:'14px 16px'}}>
                       <p style={{fontSize:13,lineHeight:1.75,color:'var(--text2)',marginBottom:10}}>{modalAI.current_status}</p>
-                      {modalAI.fulfillment_pct!==undefined&&<VerdictBar val={modalAI.fulfillment_pct}/>}
+                      {modalAI.fulfillment_likelihood_pct!==undefined&&<VerdictBar val={modalAI.fulfillment_likelihood_pct}/>}
                       {modalAI.key_findings?.length>0&&<div style={{marginTop:12}}>{modalAI.key_findings.map((f,i)=><div key={i} className="finding" style={{marginBottom:6}}><div className="finding-bullet"/><div className="finding-text">{f}</div></div>)}</div>}
                       {modalAI.sources?.length>0&&<div style={{marginTop:12}}>{modalAI.sources.slice(0,3).map((s,i)=><div key={i} className="src" style={{marginBottom:6}}><div className="src-body"><div className="src-title">{s.title}</div><div className="src-snippet">{s.snippet}</div><div className="src-footer">{s.url&&<a href={s.url} target="_blank" rel="noreferrer" className="src-link">Read ↗</a>}{s.date&&<span className="src-date">{s.date}</span>}</div></div></div>)}</div>}
                       <div className="ai-note">⚠️ AI analysis. Verify with linked sources.</div>
