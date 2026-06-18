@@ -92,19 +92,63 @@ Return ONLY this JSON structure with real values filled in:
 
     const hasUsefulSearchData = (tavily.results && tavily.results.length > 0) || tavily.answer
 
-    // CONSISTENCY SAFETY NET: detect contradiction between current_status text and verdict
-    const statusText = (result.current_status || '').toLowerCase()
-    const fulfilledSignals = ['launched', 'has helped', 'have helped', 'cleared the exam', 'cleared exam', 'provides scholarships', 'since 20', 'implemented', 'operational', 'has been running', 'currently provides', 'has benefited', 'has supported', 'rolled out', 'succeeding', 'succeeded', 'significant progress', 'candidates succeeding', 'assists', 'continues to support', 'shows progress', 'has provided', 'has assisted']
-    const looksFulfilled = fulfilledSignals.some(sig => statusText.includes(sig))
+    // Establish the confirmed status text first (this is what Pass 2 will judge)
+    const confirmedStatusText = result.current_status || (result._parse_failed ? raw.slice(0, 500) : (tavily.answer || ''))
 
-    if (looksFulfilled && (result.verdict === 'pending' || !result.verdict)) {
-      result.verdict = 'fulfilled'
-      if (!result.fulfillment_likelihood_pct || result.fulfillment_likelihood_pct < 65) {
-        result.fulfillment_likelihood_pct = 80
+    // PASS 2: Isolated verdict + scoring decision, based ONLY on the confirmed status text.
+    // This guarantees consistency because the AI is judging its own already-written summary,
+    // not generating a fresh independent guess that can contradict it.
+    let verdictDecision = null
+    if (confirmedStatusText && confirmedStatusText.length > 20) {
+      try {
+        const verdictRes = await fetch('https://api.anthropic.com/v1/messages', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-api-key': anthropicKey,
+            'anthropic-version': '2023-06-01',
+          },
+          body: JSON.stringify({
+            model: 'claude-sonnet-4-20250514',
+            max_tokens: 300,
+            messages: [{
+              role: 'user',
+              content: `Read this status description of a political promise/scheme:
+
+"${confirmedStatusText}"
+
+Based ONLY on what this text says, answer with ONLY a JSON object, nothing else:
+{"verdict":"fulfilled","confidence":"high","fulfillment_likelihood_pct":85,"people_impact_score":70}
+
+RULES:
+- If the text describes the scheme as already happening, helping people, producing results, having measurable success, or operating (any tense showing it IS active or HAS worked) -> verdict is "fulfilled" or "partial", fulfillment_likelihood_pct must be 70-95.
+- If the text describes only an announcement or plan with no evidence of action -> verdict is "pending", fulfillment_likelihood_pct should be 15-50 based on how concrete the plan sounds.
+- If the text describes failure, cancellation, or a missed deadline -> verdict is "broken", fulfillment_likelihood_pct should be 0-20.
+- If the text is empty or unrelated -> verdict is "unknown", fulfillment_likelihood_pct is 0.
+- confidence is "high" if the text gives clear specific evidence either way, "medium" if somewhat clear, "low" if vague.
+- people_impact_score (0-100) should reflect how much this affects ordinary people's daily lives based on the text — a scheme with no description of who it affects scores lower than one explicitly creating jobs, providing money, or safety etc.
+
+Respond with ONLY the JSON object.`
+            }]
+          }),
+        })
+        const verdictData = await verdictRes.json()
+        const verdictRaw = (verdictData.content || []).filter(b => b.type === 'text').map(b => b.text).join('')
+        const cleaned2 = verdictRaw.replace(/```json\s*/gi, '').replace(/```\s*/g, '').trim()
+        const match2 = cleaned2.match(/\{[\s\S]*\}/)
+        if (match2) verdictDecision = JSON.parse(match2[0])
+      } catch (e) {
+        verdictDecision = null
       }
-      if (!result.confidence || result.confidence === 'low') {
-        result.confidence = 'high'
-      }
+    }
+
+    // Apply Pass 2's decision — this OVERRIDES Pass 1's verdict/scores since Pass 2
+    // is judging the confirmed, already-written text and cannot contradict it.
+    if (verdictDecision && verdictDecision.verdict) {
+      result.verdict = verdictDecision.verdict
+      result.confidence = verdictDecision.confidence || result.confidence
+      result.fulfillment_likelihood_pct = typeof verdictDecision.fulfillment_likelihood_pct === 'number' ? verdictDecision.fulfillment_likelihood_pct : result.fulfillment_likelihood_pct
+      result.people_impact_score = typeof verdictDecision.people_impact_score === 'number' ? verdictDecision.people_impact_score : result.people_impact_score
     }
 
     result = {
@@ -116,7 +160,7 @@ Return ONLY this JSON structure with real values filled in:
       confidence: result.confidence || (hasUsefulSearchData ? 'medium' : 'low'),
       fulfillment_likelihood_pct: typeof result.fulfillment_likelihood_pct === 'number' ? result.fulfillment_likelihood_pct : (hasUsefulSearchData ? 35 : 0),
       people_impact_score: typeof result.people_impact_score === 'number' ? result.people_impact_score : (hasUsefulSearchData ? 40 : 0),
-      current_status: result.current_status || (result._parse_failed ? `[JSON parsing failed — raw AI text] ${result._raw_preview}` : (tavily.answer || 'WE searched the web but could not find detailed information. Try rephrasing with more specific terms.')),
+      current_status: confirmedStatusText || 'WE searched the web but could not find detailed information. Try rephrasing with more specific terms.',
       sustainability_goal: result.sustainability_goal || 'Not enough information was found to assess the long-term sustainability design of this scheme.',
       timeline: Array.isArray(result.timeline) ? result.timeline : [],
       key_findings: Array.isArray(result.key_findings) && result.key_findings.length ? result.key_findings :
