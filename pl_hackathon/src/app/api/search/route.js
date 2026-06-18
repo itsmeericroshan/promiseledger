@@ -32,7 +32,7 @@ export async function POST(request) {
       )
     ].filter(Boolean).join('\n\n---\n\n')
 
-    // STEP 2: Claude analyses real search results — much stricter, case-specific prompt
+    // STEP 2: Claude analyses real search results
     const claudeRes = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: {
@@ -45,64 +45,23 @@ export async function POST(request) {
         max_tokens: 4000,
         messages: [{
           role: 'user',
-          content: `You are WE, a rigorous political fact-checking analyst. You will be given REAL web search results about a specific promise or scheme. Your job is to carefully READ them and report the ACTUAL facts found — not a generic template answer.
+          content: `You are WE, a rigorous political fact-checking analyst. Read the REAL web search results below about a specific promise or scheme, then respond with ONLY a single JSON object — no reasoning text, no markdown fences, no commentary before or after. Your entire response must be valid JSON starting with { and ending with }.
 
 QUERY: "${query}"
 
 REAL WEB SEARCH RESULTS:
 ${searchContext || 'No results found.'}
 
-CRITICAL INSTRUCTIONS — READ CAREFULLY:
-1. Actually read the search results above word by word before answering.
-2. If the search results describe the scheme/promise as already operating, helping people, producing results, or being implemented — the verdict MUST be "fulfilled" or "partial", NOT "pending". Look for evidence words like "launched", "implemented", "selected candidates cleared exam", "scheme provides", "has helped", "since 2022/2023" etc — these indicate it IS happening, so do not call it pending.
-3. Only use "pending" if the search results describe something announced/promised but not yet started, or still "under process"/"will be formed".
-4. Only use "broken" if search results explicitly mention failure, cancellation, or the deadline passing with no action.
-5. Your fulfillment_likelihood_pct, people_impact_score must be SPECIFIC to this case — vary them based on actual evidence strength. Do not default to 40/50/50.
-6. Your key_findings, advantages, and disadvantages must reference SPECIFIC details from the search results (names, numbers, dates) — never generic boilerplate like "may face budget constraints" unless the search results actually say that.
-7. For "sustainability_goal" — do NOT give a score. Instead write 2-3 sentences explaining what the sustainability/long-term goal of this specific scheme is, based on its actual design and purpose found in search results — e.g. is it a one-time scheme or recurring, does it build lasting capability or give a one-time benefit, is it scalable.
+RULES FOR ACCURATE ANALYSIS:
+- Read the search results carefully. If they describe the scheme as already launched, operating, helping people, or producing measurable results (e.g. "X candidates succeeded", "has provided", "since 2022", "rolled out", "implemented") then verdict MUST be "fulfilled" or "partial" — NOT "pending".
+- Only use "pending" if the scheme was announced but search results show no evidence it has started.
+- Only use "broken" if search results explicitly mention cancellation, failure, or missed deadlines with no action.
+- fulfillment_likelihood_pct and people_impact_score MUST be specific numbers based on the actual evidence strength for THIS case — never default to round numbers like 45 or 50. A scheme with strong measurable results should score 75-95. A scheme with no action should score 10-30.
+- current_status, key_findings, advantages, disadvantages must all reference specific facts, names, or numbers from the search results — never generic filler text.
+- sustainability_goal: write 2-3 sentences on whether this is a one-time benefit or builds lasting capacity/institutions, based on the scheme's actual design.
 
-Respond with ONLY a raw JSON object. No markdown fences, no extra text.
-
-{
-  "promise_text": "concise statement of the actual promise/scheme",
-  "made_by": "who is responsible — be specific (party, government, leader name) based on search results",
-  "made_when": "year or date this started/was announced, from search results",
-  "made_where": "context — state, country, or event",
-  "verdict": "fulfilled",
-  "confidence": "high",
-  "fulfillment_likelihood_pct": 85,
-  "people_impact_score": 70,
-  "current_status": "3-4 sentences with SPECIFIC facts, names, numbers and dates taken directly from the search results.",
-  "sustainability_goal": "2-3 sentences explaining the actual long-term sustainability design/goal of this specific scheme based on what was found — is it ongoing, scalable, one-time, building capacity etc.",
-  "timeline": [
-    {"year": "2022", "event": "specific event from search results"},
-    {"year": "2026", "event": "latest specific update from search results"}
-  ],
-  "key_findings": [
-    "specific fact with numbers/names from search results",
-    "specific fact 2",
-    "specific fact 3"
-  ],
-  "advantages": [
-    "specific benefit this scheme/promise gives, grounded in what it actually does",
-    "specific benefit 2",
-    "specific benefit 3"
-  ],
-  "disadvantages": [
-    "specific risk or limitation grounded in the actual scheme design or search results",
-    "specific risk 2",
-    "specific risk 3"
-  ],
-  "people_impact": "1-2 sentences on how this specifically affects the people it targets, using details from search results.",
-  "expert_verdict": "Any opinion, criticism, or analysis mentioned in the search results — quote or paraphrase. If none found, say 'No independent expert commentary found in current search results.'",
-  "sources": [
-    {"title": "exact title from search results", "snippet": "one specific sentence with facts from that source", "url": "exact url from search results", "date": "date if available", "credibility": "high"}
-  ],
-  "searched_on": "latest available data"
-}
-
-Verdict options: fulfilled, partial, pending, broken, unknown
-Confidence: high (clear specific evidence), medium (some evidence), low (vague/unrelated)`
+Return ONLY this JSON structure with real values filled in:
+{"promise_text":"...","made_by":"...","made_when":"...","made_where":"...","verdict":"fulfilled","confidence":"high","fulfillment_likelihood_pct":80,"people_impact_score":70,"current_status":"...","sustainability_goal":"...","timeline":[{"year":"2022","event":"..."}],"key_findings":["...","...","..."],"advantages":["...","...","..."],"disadvantages":["...","...","..."],"people_impact":"...","expert_verdict":"...","sources":[{"title":"...","snippet":"...","url":"...","date":"...","credibility":"high"}],"searched_on":"latest available data"}`
         }]
       }),
     });
@@ -111,23 +70,86 @@ Confidence: high (clear specific evidence), medium (some evidence), low (vague/u
     const raw = (claude.content || []).filter(b => b.type === 'text').map(b => b.text).join('')
 
     let result = null
+    let parseError = ''
     try {
       const cleaned = raw.replace(/```json\s*/gi, '').replace(/```\s*/g, '').trim()
       try {
         result = JSON.parse(cleaned)
-      } catch {
-        const match = cleaned.match(/\{[\s\S]*\}/)
-        if (match) result = JSON.parse(match[0])
+      } catch (e1) {
+        const matches = cleaned.match(/\{[\s\S]*\}/g)
+        if (matches && matches.length) {
+          result = JSON.parse(matches[matches.length - 1])
+        }
       }
     } catch (e) {
+      parseError = e.message
       result = null
     }
 
-    if (!result || typeof result !== 'object') {
-      result = {}
+    if (!result || typeof result !== 'object' || Array.isArray(result)) {
+      result = { _parse_failed: true, _raw_preview: raw.slice(0, 300), _error: parseError }
     }
 
     const hasUsefulSearchData = (tavily.results && tavily.results.length > 0) || tavily.answer
+
+    // Establish the confirmed status text first (this is what Pass 2 will judge)
+    const confirmedStatusText = result.current_status || (result._parse_failed ? raw.slice(0, 500) : (tavily.answer || ''))
+
+    // PASS 2: Isolated verdict + scoring decision, based ONLY on the confirmed status text.
+    // This guarantees consistency because the AI is judging its own already-written summary,
+    // not generating a fresh independent guess that can contradict it.
+    let verdictDecision = null
+    if (confirmedStatusText && confirmedStatusText.length > 20) {
+      try {
+        const verdictRes = await fetch('https://api.anthropic.com/v1/messages', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-api-key': anthropicKey,
+            'anthropic-version': '2023-06-01',
+          },
+          body: JSON.stringify({
+            model: 'claude-sonnet-4-20250514',
+            max_tokens: 300,
+            messages: [{
+              role: 'user',
+              content: `Read this status description of a political promise/scheme:
+
+"${confirmedStatusText}"
+
+Based ONLY on what this text says, answer with ONLY a JSON object, nothing else:
+{"verdict":"fulfilled","confidence":"high","fulfillment_likelihood_pct":85,"people_impact_score":70}
+
+RULES:
+- If the text describes the scheme as already happening, helping people, producing results, having measurable success, or operating (any tense showing it IS active or HAS worked) -> verdict is "fulfilled" or "partial", fulfillment_likelihood_pct must be 70-95.
+- If the text describes only an announcement or plan with no evidence of action -> verdict is "pending", fulfillment_likelihood_pct should be 15-50 based on how concrete the plan sounds.
+- If the text describes failure, cancellation, or a missed deadline -> verdict is "broken", fulfillment_likelihood_pct should be 0-20.
+- If the text is empty or unrelated -> verdict is "unknown", fulfillment_likelihood_pct is 0.
+- confidence is "high" if the text gives clear specific evidence either way, "medium" if somewhat clear, "low" if vague.
+- people_impact_score (0-100) should reflect how much this affects ordinary people's daily lives based on the text — a scheme with no description of who it affects scores lower than one explicitly creating jobs, providing money, or safety etc.
+
+Respond with ONLY the JSON object.`
+            }]
+          }),
+        })
+        const verdictData = await verdictRes.json()
+        const verdictRaw = (verdictData.content || []).filter(b => b.type === 'text').map(b => b.text).join('')
+        const cleaned2 = verdictRaw.replace(/```json\s*/gi, '').replace(/```\s*/g, '').trim()
+        const match2 = cleaned2.match(/\{[\s\S]*\}/)
+        if (match2) verdictDecision = JSON.parse(match2[0])
+      } catch (e) {
+        verdictDecision = null
+      }
+    }
+
+    // Apply Pass 2's decision — this OVERRIDES Pass 1's verdict/scores since Pass 2
+    // is judging the confirmed, already-written text and cannot contradict it.
+    if (verdictDecision && verdictDecision.verdict) {
+      result.verdict = verdictDecision.verdict
+      result.confidence = verdictDecision.confidence || result.confidence
+      result.fulfillment_likelihood_pct = typeof verdictDecision.fulfillment_likelihood_pct === 'number' ? verdictDecision.fulfillment_likelihood_pct : result.fulfillment_likelihood_pct
+      result.people_impact_score = typeof verdictDecision.people_impact_score === 'number' ? verdictDecision.people_impact_score : result.people_impact_score
+    }
 
     result = {
       promise_text: result.promise_text || query,
@@ -136,9 +158,9 @@ Confidence: high (clear specific evidence), medium (some evidence), low (vague/u
       made_where: result.made_where || 'Not specified',
       verdict: result.verdict || (hasUsefulSearchData ? 'pending' : 'unknown'),
       confidence: result.confidence || (hasUsefulSearchData ? 'medium' : 'low'),
-      fulfillment_likelihood_pct: typeof result.fulfillment_likelihood_pct === 'number' ? result.fulfillment_likelihood_pct : (hasUsefulSearchData ? 45 : 0),
-      people_impact_score: typeof result.people_impact_score === 'number' ? result.people_impact_score : (hasUsefulSearchData ? 50 : 0),
-      current_status: result.current_status || tavily.answer || 'WE searched the web but could not find detailed information. Try rephrasing with more specific terms.',
+      fulfillment_likelihood_pct: typeof result.fulfillment_likelihood_pct === 'number' ? result.fulfillment_likelihood_pct : (hasUsefulSearchData ? 35 : 0),
+      people_impact_score: typeof result.people_impact_score === 'number' ? result.people_impact_score : (hasUsefulSearchData ? 40 : 0),
+      current_status: confirmedStatusText || 'WE searched the web but could not find detailed information. Try rephrasing with more specific terms.',
       sustainability_goal: result.sustainability_goal || 'Not enough information was found to assess the long-term sustainability design of this scheme.',
       timeline: Array.isArray(result.timeline) ? result.timeline : [],
       key_findings: Array.isArray(result.key_findings) && result.key_findings.length ? result.key_findings :
@@ -155,7 +177,8 @@ Confidence: high (clear specific evidence), medium (some evidence), low (vague/u
           date: r.published_date || '',
           credibility: 'medium'
         })),
-      searched_on: result.searched_on || 'latest available data'
+      searched_on: result.searched_on || 'latest available data',
+      _debug_parse_failed: result._parse_failed || false
     }
 
     return Response.json(result)
