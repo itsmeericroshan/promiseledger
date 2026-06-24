@@ -57,12 +57,22 @@ export default function Home() {
   const toastTimer = useRef(null)
 
   useEffect(() => {
-    const stored = localStorage.getItem('we_v2_ledger')
-    if (stored) setLedger(JSON.parse(stored))
+    // Load promises from DynamoDB on mount
+    fetch('/api/promises')
+      .then(r => r.json())
+      .then(data => {
+        if (data.items) setLedger(data.items)
+      })
+      .catch(() => {
+        // Fallback to localStorage if DB fails
+        const stored = localStorage.getItem('we_v2_ledger')
+        if (stored) setLedger(JSON.parse(stored))
+      })
   }, [])
 
   const persist = useCallback((nl) => {
     setLedger(nl)
+    // Also keep localStorage as backup
     localStorage.setItem('we_v2_ledger', JSON.stringify(nl))
   }, [])
 
@@ -134,6 +144,12 @@ export default function Home() {
       status: 'pending', verdictHistory: [],
       source: 'manual'
     }
+    // Save to DynamoDB
+    fetch('/api/promises', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(record)
+    }).catch(console.error)
     persist([record, ...ledger])
     setAddText(''); setAddWho(''); setAddYoutube(''); setAddWhen(''); setAddWhere('')
     setSaving(false)
@@ -159,6 +175,15 @@ export default function Home() {
         return { ...p, status: selectedVerdict, verdictHistory: h }
       })
       persist(updated)
+      // Update DynamoDB
+      const updatedP = updated.find(p => p.id === modal.id)
+      if (updatedP) {
+        fetch('/api/promises', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id: updatedP.id, status: updatedP.status, verdictHistory: updatedP.verdictHistory })
+        }).catch(console.error)
+      }
       setModal(updated.find(p => p.id === modal.id))
       setVerdictProof(''); setVerdictNote(''); setSubmitting(false)
       showToast('Verdict updated!', 'success')
